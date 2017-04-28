@@ -16,6 +16,10 @@
 #include "llvm/IR/Function.h"
 // using llvm::Function
 
+#include "llvm/IR/Attributes.h"
+// using llvm::Attribute
+// using llvm::AttrBuilder
+
 #include "llvm/Support/Casting.h"
 // using llvm::dyn_cast
 
@@ -81,6 +85,13 @@ static llvm::RegisterStandardPasses RegisterPropagateAttributesPass(
 //
 
 namespace {
+
+PropagateAttributesPass::PropagateAttributesPass()
+    : llvm::CallGraphSCCPass(ID) {
+  ABuilder.addAttribute(llvm::Attribute::NoReturn).addAttribute("icsa.dynapar.io");
+
+  return;
+}
 
 void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.setPreservesAll();
