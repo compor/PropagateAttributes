@@ -2,8 +2,12 @@
 //
 //
 
+#ifndef PROPAGATEATTRIBUTESPASS_HPP
+#define PROPAGATEATTRIBUTESPASS_HPP
+
 #include "llvm/Analysis/CallGraphSCCPass.h"
 // using llvm::CallGraphSCCPass
+// using llvm::CallGraphSCC
 
 namespace llvm {
 class CallGraphSCCPass;
@@ -26,3 +30,5 @@ private:
 };
 
 } // namespace unnamed end
+
+#endif // end of include guard: PROPAGATEATTRIBUTESPASS_HPP
