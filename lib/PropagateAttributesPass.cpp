@@ -54,6 +54,10 @@
 
 #define PLUGIN_ERR llvm::errs()
 
+template <typename T> struct make_plain_ptr { using type = T; };
+template <typename T> struct make_plain_ptr<const T *> { using type = T *; };
+template <typename T> using make_plain_ptr_t = typename make_plain_ptr<T>::type;
+
 // plugin registration for opt
 
 char PropagateAttributesPass::ID = 0;
@@ -98,6 +102,23 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.setPreservesAll();
 
   return;
+}
+
+bool PropagateAttributesPass::doInitialization(llvm::CallGraph &CG) {
+  for (const auto &CurNode : CG) {
+    auto *CurFunc = CurNode.first;
+    if (!CurFunc)
+      continue;
+
+    const auto &CurFuncAttrSet = CurFunc->getAttributes().getFnAttributes();
+    llvm::AttrBuilder CurFuncAttrBuilder{CurFuncAttrSet, 0};
+
+    if (CurFuncAttrBuilder.overlaps(m_AttrBuilder))
+      m_PotentialCallers.insert(
+          const_cast<make_plain_ptr_t<decltype(CurFunc)>>(CurFunc));
+  }
+
+  return false;
 }
 
 bool PropagateAttributesPass::runOnSCC(llvm::CallGraphSCC &SCC) {
