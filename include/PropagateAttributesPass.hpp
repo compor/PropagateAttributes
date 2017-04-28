@@ -2,10 +2,11 @@
 //
 //
 
-#include "llvm/Pass.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 // using llvm::CallGraphSCCPass
 
 namespace llvm {
+class CallGraphSCCPass;
 class CallGraphSCC;
 } // namespace llvm end
 
