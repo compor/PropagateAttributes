@@ -8,6 +8,7 @@
 namespace llvm {
 class CallGraphSCCPass;
 class CallGraphSCC;
+class AnalysisUsage;
 } // namespace llvm end
 
 namespace {
@@ -18,6 +19,7 @@ public:
 
   PropagateAttributesPass() : llvm::CallGraphSCCPass(ID) {}
 
+  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
   bool runOnSCC(llvm::CallGraphSCC &SCC) override;
 };
 

@@ -74,14 +74,22 @@ registerPropagateAttributesPass(const llvm::PassManagerBuilder &Builder,
   return;
 }
 
-static llvm::RegisterStandardPasses
-    RegisterPropagateAttributesPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                                registerPropagateAttributesPass);
+static llvm::RegisterStandardPasses RegisterPropagateAttributesPass(
+    llvm::PassManagerBuilder::EP_EarlyAsPossible,
+    registerPropagateAttributesPass);
 
 //
 
 namespace {
 
-bool PropagateAttributesPass::runOnSCC(llvm::CallGraphSCC &SCC) { return false; }
+void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+
+  return;
+}
+
+bool PropagateAttributesPass::runOnSCC(llvm::CallGraphSCC &SCC) {
+  return false;
+}
 
 } // namespace unnamed end
