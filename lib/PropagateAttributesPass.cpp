@@ -7,11 +7,8 @@
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
-#include "llvm/IR/Type.h"
-// using llvm::Type
-
-#include "llvm/IR/Instruction.h"
-// using llvm::Instruction
+#include "llvm/ADT/SmallPtrSet.h"
+// using llvm::SmallPtrSet
 
 #include "llvm/IR/Function.h"
 // using llvm::Function
@@ -20,11 +17,11 @@
 // using llvm::Attribute
 // using llvm::AttrBuilder
 
-#include "llvm/Support/Casting.h"
-// using llvm::dyn_cast
-
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
+
+#include "llvm/Analysis/CallGraph.h"
+// using llvm::CallGraph
 
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
@@ -36,6 +33,8 @@
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
 // using llvm::dbgs
+
+#include "PropagateAttributesPass.hpp"
 
 #define DEBUG_TYPE "propagate_attributes"
 
@@ -88,18 +87,33 @@ namespace {
 
 PropagateAttributesPass::PropagateAttributesPass()
     : llvm::CallGraphSCCPass(ID) {
-  ABuilder.addAttribute(llvm::Attribute::NoReturn).addAttribute("icsa.dynapar.io");
+  m_AttrBuilder.addAttribute(llvm::Attribute::NoReturn)
+      .addAttribute("icsa.dynapar.io");
 
   return;
 }
 
 void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequired<llvm::CallGraphWrapperPass>();
   AU.setPreservesAll();
 
   return;
 }
 
 bool PropagateAttributesPass::runOnSCC(llvm::CallGraphSCC &SCC) {
+  llvm::CallGraph &CG =
+      getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
+
+  // selection phase
+
+  for (auto &Node : SCC) {
+    auto *Func = Node->getFunction();
+    if (Func)
+      m_PotentialCallers.insert(Func);
+
+    PLUGIN_OUT << "ref #: " << Node->getNumReferences() << "\n";
+  }
+
   return false;
 }
 
