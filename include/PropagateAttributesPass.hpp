@@ -9,6 +9,12 @@
 // using llvm::CallGraphSCCPass
 // using llvm::CallGraphSCC
 
+#include <set>
+// using std::set
+
+#include <string>
+// using std::string
+
 namespace llvm {
 class CallGraphSCCPass;
 class CallGraphSCC;
@@ -31,6 +37,7 @@ struct PropagateAttributesPass : public llvm::CallGraphSCCPass {
 private:
   llvm::AttrBuilder m_AttrBuilder;
   llvm::SmallPtrSet<llvm::Function *, 8> m_PotentialCallers;
+  std::set<std::string> m_CustomAttributes;
 };
 
 } // namespace unnamed end

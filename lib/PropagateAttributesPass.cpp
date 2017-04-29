@@ -34,6 +34,9 @@
 // using DEBUG macro
 // using llvm::dbgs
 
+#include <algorithm>
+// using std::for_each
+
 #include "PropagateAttributesPass.hpp"
 
 #define DEBUG_TYPE "propagate_attributes"
@@ -91,8 +94,13 @@ namespace {
 
 PropagateAttributesPass::PropagateAttributesPass()
     : llvm::CallGraphSCCPass(ID) {
-  m_AttrBuilder.addAttribute(llvm::Attribute::NoReturn)
-      .addAttribute("icsa.dynapar.io");
+  m_CustomAttributes.insert("icsa.dynapar.performs-io");
+
+  // builtin attributes
+  m_AttrBuilder.addAttribute(llvm::Attribute::NoReturn);
+
+  std::for_each(std::begin(m_CustomAttributes), std::end(m_CustomAttributes),
+                [&](auto &e) { m_AttrBuilder.addAttribute(e); });
 
   return;
 }
