@@ -32,7 +32,7 @@ set(TESTEE_LIB_FILENAME "${lib_prefix}${TESTEE_LIB}${lib_suffix}")
 # aggregate unit test targets under a pseudo-target
 add_custom_target(unittests)
 
-set(PRJ_TEST_NAMES TestDummy)
+set(PRJ_TEST_NAMES TestPropagateAttributes)
 
 foreach(prj_test_name ${PRJ_TEST_NAMES})
   set(TEST_SOURCES "${prj_test_name}.cpp")
