@@ -60,7 +60,8 @@ struct test_result_visitor : public boost::static_visitor<unsigned int> {
 
 class TestPropagateAttributes : public testing::Test {
 public:
-  TestPropagateAttributes() : m_Module{nullptr}, m_TestDataDir{"./unittests/data/"} {}
+  TestPropagateAttributes()
+      : m_Module{nullptr}, m_TestDataDir{"./unittests/data/"} {}
 
   void ParseAssemblyString(const char *Assembly) {
     llvm::SMDiagnostic err;
@@ -118,20 +119,26 @@ public:
 
       void getAnalysisUsage(llvm::AnalysisUsage &AU) const override {
         AU.setPreservesAll();
-        AU.addRequiredTransitive<llvm::CallGraphWrapperPass>();
+        //AU.addRequiredTransitive<llvm::CallGraphWrapperPass>();
 
         return;
       }
 
       bool runOnModule(llvm::Module &M) override {
         test_result_map::const_iterator found;
+        const auto &CG = llvm::CallGraph(M);
+
+        llvm::AttrBuilder AB;
+        AB.addAttribute("foo");
+        const auto &funcs =
+            PropagateAttributesPass::filterFuncWithAttributes(CG, AB);
 
         // subcase
-        found = lookup("subcase");
+        found = lookup("no attributes");
 
         const auto &rv = 1;
-        const auto &ev =
-            boost::apply_visitor(test_result_visitor(), found->second);
+        const auto &ev = funcs.size();
+        boost::apply_visitor(test_result_visitor(), found->second);
         EXPECT_EQ(ev, rv) << found->first;
 
         return false;
@@ -172,7 +179,7 @@ TEST_F(TestPropagateAttributes, NoAttributes) {
 
   test_result_map trm;
 
-  trm.insert({"subcase", 1});
+  trm.insert({"no attributes", 0});
   ExpectTestPass(trm);
 }
 

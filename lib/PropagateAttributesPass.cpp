@@ -57,10 +57,6 @@
 
 #define PLUGIN_ERR llvm::errs()
 
-template <typename T> struct rm_const_ptr { using type = T; };
-template <typename T> struct rm_const_ptr<const T *> { using type = T *; };
-template <typename T> using rm_const_ptr_t = typename rm_const_ptr<T>::type;
-
 // plugin registration for opt
 
 char PropagateAttributesPass::ID = 0;

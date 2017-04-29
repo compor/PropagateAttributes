@@ -5,4 +5,3 @@ define void @test() {
   store i32 0, i32* %a, align 4
   ret void
 }
-
