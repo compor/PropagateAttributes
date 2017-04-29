@@ -54,9 +54,9 @@
 
 #define PLUGIN_ERR llvm::errs()
 
-template <typename T> struct make_plain_ptr { using type = T; };
-template <typename T> struct make_plain_ptr<const T *> { using type = T *; };
-template <typename T> using make_plain_ptr_t = typename make_plain_ptr<T>::type;
+template <typename T> struct rm_const_ptr { using type = T; };
+template <typename T> struct rm_const_ptr<const T *> { using type = T *; };
+template <typename T> using rm_const_ptr_t = typename rm_const_ptr<T>::type;
 
 // plugin registration for opt
 
@@ -115,7 +115,7 @@ bool PropagateAttributesPass::doInitialization(llvm::CallGraph &CG) {
 
     if (CurFuncAttrBuilder.overlaps(m_AttrBuilder))
       m_PotentialCallers.insert(
-          const_cast<make_plain_ptr_t<decltype(CurFunc)>>(CurFunc));
+          const_cast<rm_const_ptr_t<decltype(CurFunc)>>(CurFunc));
   }
 
   return false;
