@@ -75,14 +75,14 @@ set(PRJ_UNIT_TESTS_SCRIPT "run_unit_tests.sh")
 get_property(PRJ_UNIT_TESTS_TARGET TARGET unittests PROPERTY NAME)
 
 configure_file("${CMAKE_SOURCE_DIR}/utils/scripts/${PRJ_UNIT_TESTS_SCRIPT}.in" 
-    "${CMAKE_BINARY_DIR}/${PRJ_UNIT_TESTS_SCRIPT}"
-    @ONLY)
+  "${CMAKE_BINARY_DIR}/${PRJ_UNIT_TESTS_SCRIPT}"
+  @ONLY)
 
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/data")
-file(GLOB test_data_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "data/*.ll")
 
-foreach(tdf ${test_data_files})
-  configure_file(${tdf} ${CMAKE_CURRENT_BINARY_DIR}/${tdf})
-endforeach()
+set(TEST_DATA_DIR "${CMAKE_CURRENT_BINARY_DIR}/data")
+file(MAKE_DIRECTORY ${TEST_DATA_DIR})
+
+add_custom_command(TARGET unittests PRE_BUILD COMMAND 
+  ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/data/" ${TEST_DATA_DIR})
 
 
