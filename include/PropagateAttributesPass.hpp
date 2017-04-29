@@ -43,14 +43,18 @@ struct PropagateAttributesPass : public llvm::CallGraphSCCPass {
   static char ID;
 
   static ConstFuncSet filterFuncWithAttributes(const llvm::CallGraph &CG,
-                                          const llvm::AttrBuilder &AB) {
+                                               const llvm::AttrBuilder &AB) {
     ConstFuncSet Funcs;
 
     for (const auto &CGNode : CG) {
       if (!CGNode.first)
         continue;
 
-      Funcs.insert(CGNode.first);
+      llvm::AttrBuilder CurAB(CGNode.first->getAttributes(),
+                              llvm::AttributeSet::ReturnIndex);
+
+      if(AB.overlaps(CurAB))
+        Funcs.insert(CGNode.first);
     }
 
     return Funcs;

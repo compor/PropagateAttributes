@@ -134,12 +134,11 @@ public:
             PropagateAttributesPass::filterFuncWithAttributes(CG, AB);
 
         // subcase
-        found = lookup("no attributes");
+        found = lookup("functions found");
 
-        const auto &rv = 1;
-        const auto &ev = funcs.size();
-        boost::apply_visitor(test_result_visitor(), found->second);
-        EXPECT_EQ(ev, rv) << found->first;
+        const auto &ff = funcs.size();
+        const auto &ev = boost::apply_visitor(test_result_visitor(), found->second);
+        EXPECT_EQ(ev, ff) << found->first;
 
         return false;
       }
@@ -179,7 +178,16 @@ TEST_F(TestPropagateAttributes, NoAttributes) {
 
   test_result_map trm;
 
-  trm.insert({"no attributes", 0});
+  trm.insert({"functions found", 0});
+  ExpectTestPass(trm);
+}
+
+TEST_F(TestPropagateAttributes, DifferentAttribute) {
+  ParseAssemblyFile("test02.ll");
+
+  test_result_map trm;
+
+  trm.insert({"functions found", 0});
   ExpectTestPass(trm);
 }
 
