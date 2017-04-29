@@ -58,11 +58,11 @@ struct test_result_visitor : public boost::static_visitor<unsigned int> {
   unsigned int operator()(unsigned int i) const { return i; }
 };
 
-class TestDummy : public testing::Test {
+class TestPropagateAttributes : public testing::Test {
 public:
-  TestDummy() : m_Module{nullptr} {}
+  TestPropagateAttributes() : m_Module{nullptr}, m_TestDataDir{"./unittests/data/"} {}
 
-  void ParseAssembly(const char *Assembly) {
+  void ParseAssemblyString(const char *Assembly) {
     llvm::SMDiagnostic err;
 
     m_Module =
@@ -75,9 +75,24 @@ public:
     if (!m_Module)
       llvm::report_fatal_error(os.str().c_str());
 
-    auto *Func = m_Module->getFunction("test");
-    if (!Func)
-      llvm::report_fatal_error("Test must have a function named @test");
+    return;
+  }
+
+  void ParseAssemblyFile(const char *Filename) {
+    llvm::SMDiagnostic err;
+
+    std::string fullFilename{m_TestDataDir};
+    fullFilename += Filename;
+
+    m_Module =
+        llvm::parseAssemblyFile(fullFilename, err, llvm::getGlobalContext());
+
+    std::string errMsg;
+    llvm::raw_string_ostream os(errMsg);
+    err.print("", os);
+
+    if (!m_Module)
+      llvm::report_fatal_error(os.str().c_str());
 
     return;
   }
@@ -85,9 +100,9 @@ public:
   void ExpectTestPass(const test_result_map &trm) {
     static char ID;
 
-    struct UtilityPass : public llvm::FunctionPass {
+    struct UtilityPass : public llvm::ModulePass {
       UtilityPass(const test_result_map &trm)
-          : llvm::FunctionPass(ID), m_trm(trm) {}
+          : llvm::ModulePass(ID), m_trm(trm) {}
 
       static int initialize() {
         auto *registry = llvm::PassRegistry::getPassRegistry();
@@ -96,32 +111,23 @@ public:
                                       nullptr, true, true);
 
         registry->registerPass(*PI, false);
-        llvm::initializeLoopInfoWrapperPassPass(*registry);
+        llvm::initializeCallGraphWrapperPassPass(*registry);
 
         return 0;
       }
 
       void getAnalysisUsage(llvm::AnalysisUsage &AU) const override {
         AU.setPreservesAll();
-        AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
+        AU.addRequiredTransitive<llvm::CallGraphWrapperPass>();
 
         return;
       }
 
-      bool runOnFunction(llvm::Function &F) override {
-        if (!F.hasName() || !F.getName().startswith("test"))
-          return false;
-
-        auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
-        // LI.print(llvm::outs());
-
-        auto &CurLoop = *LI.begin();
-        assert(CurLoop && "Loop ptr is invalid");
-
+      bool runOnModule(llvm::Module &M) override {
         test_result_map::const_iterator found;
 
         // subcase
-        found = lookup("number of exits");
+        found = lookup("subcase");
 
         const auto &rv = 1;
         const auto &ev =
@@ -158,33 +164,15 @@ public:
 
 protected:
   std::unique_ptr<llvm::Module> m_Module;
+  const char *m_TestDataDir;
 };
 
-TEST_F(TestDummy, DISABLED_RegularLoopExits) {
-  ParseAssembly("define void @test() {\n"
-                "%i = alloca i32, align 4\n"
-                "%a = alloca i32, align 4\n"
-                "store i32 100, i32* %i, align 4\n"
-                "store i32 0, i32* %a, align 4\n"
-                "br label %1\n"
-
-                "%2 = load i32, i32* %i, align 4\n"
-                "%3 = add nsw i32 %2, -1\n"
-                "store i32 %3, i32* %i, align 4\n"
-                "%4 = icmp ne i32 %3, 0\n"
-                "br i1 %4, label %5, label %8\n"
-
-                "%6 = load i32, i32* %a, align 4\n"
-                "%7 = add nsw i32 %6, 1\n"
-                "store i32 %7, i32* %a, align 4\n"
-                "br label %1\n"
-
-                "ret void\n"
-                "}\n");
+TEST_F(TestPropagateAttributes, NoAttributes) {
+  ParseAssemblyFile("test1.ll");
 
   test_result_map trm;
 
-  trm.insert({"number of exits", 1});
+  trm.insert({"subcase", 1});
   ExpectTestPass(trm);
 }
 
