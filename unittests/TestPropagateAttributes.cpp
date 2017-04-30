@@ -180,7 +180,7 @@ protected:
 };
 
 TEST_F(TestPropagateAttributes, NoAttributes) {
-  ParseAssemblyFile("test1.ll");
+  ParseAssemblyFile("test01.ll");
 
   test_result_map trm;
 
@@ -188,12 +188,21 @@ TEST_F(TestPropagateAttributes, NoAttributes) {
   ExpectTestPass(trm);
 }
 
-TEST_F(TestPropagateAttributes, DifferentAttribute) {
+TEST_F(TestPropagateAttributes, DoesNotHaveRequestedAttribute) {
   ParseAssemblyFile("test02.ll");
 
   test_result_map trm;
 
   trm.insert({"functions found", 0});
+  ExpectTestPass(trm);
+}
+
+TEST_F(TestPropagateAttributes, HasRequestedAttribute) {
+  ParseAssemblyFile("test03.ll");
+
+  test_result_map trm;
+
+  trm.insert({"functions found", 1});
   ExpectTestPass(trm);
 }
 

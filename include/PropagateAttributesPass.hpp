@@ -10,6 +10,7 @@
 // using llvm::CallGraphSCC
 
 // TODO to move to source file
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
@@ -49,12 +50,14 @@ struct PropagateAttributesPass : public llvm::CallGraphSCCPass {
     for (const auto &CGNode : CG) {
       if (!CGNode.first)
         continue;
+      auto *CurFunc = CGNode.first;
 
-      llvm::AttrBuilder CurAB(CGNode.first->getAttributes(),
-                              llvm::AttributeSet::ReturnIndex);
+      llvm::outs() << CurFunc->getAttributes().getNumSlots();
+      llvm::AttrBuilder CurAB(CurFunc->getAttributes(),
+                              llvm::AttributeSet::FunctionIndex);
 
-      if(AB.overlaps(CurAB))
-        Funcs.insert(CGNode.first);
+      if (AB.overlaps(CurAB))
+        Funcs.insert(CurFunc);
     }
 
     return Funcs;
