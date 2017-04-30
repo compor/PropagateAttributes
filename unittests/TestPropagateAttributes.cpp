@@ -34,6 +34,9 @@
 #include "llvm/AsmParser/Parser.h"
 // using llvm::parseAssemblyString
 
+#include "llvm/IR/Verifier.h"
+// using llvm::verifyModule
+
 #include "llvm/Support/ErrorHandling.h"
 // using llvm::report_fatal_error
 
@@ -91,6 +94,9 @@ public:
     std::string errMsg;
     llvm::raw_string_ostream os(errMsg);
     err.print("", os);
+
+    if(llvm::verifyModule(*m_Module, &(llvm::errs())))
+      llvm::report_fatal_error("module verification failed\n");
 
     if (!m_Module)
       llvm::report_fatal_error(os.str().c_str());
