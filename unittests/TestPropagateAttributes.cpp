@@ -166,12 +166,13 @@ public:
         return false;
       }
 
-      test_result_map::const_iterator lookup(const std::string &subcase) {
+      test_result_map::const_iterator lookup(const std::string &subcase,
+                                             bool fatalIfMissing = false) {
         auto found = m_trm.find(subcase);
-        // if (m_trm.end() == found) {
-        // llvm::errs() << "subcase: " << subcase << " test data not found\n";
-        // std::abort();
-        //}
+        if (fatalIfMissing && m_trm.end() == found) {
+          llvm::errs() << "subcase: " << subcase << " test data not found\n";
+          std::abort();
+        }
 
         return found;
       }
