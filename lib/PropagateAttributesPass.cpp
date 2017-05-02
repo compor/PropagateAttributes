@@ -89,8 +89,7 @@ static llvm::RegisterStandardPasses RegisterPropagateAttributesPass(
 
 namespace {
 
-PropagateAttributesPass::PropagateAttributesPass()
-    : llvm::ModulePass(ID) {
+PropagateAttributesPass::PropagateAttributesPass() : llvm::ModulePass(ID) {
   m_CustomAttributes.insert("icsa.dynapar.performs-io");
 
   // builtin attributes
@@ -109,36 +108,9 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   return;
 }
 
-//bool PropagateAttributesPass::doInitialization(llvm::CallGraph &CG) {
-  //for (const auto &CurNode : CG) {
-    //auto *CurFunc = CurNode.first;
-    //if (!CurFunc)
-      //continue;
-
-    //const auto &CurFuncAttrSet = CurFunc->getAttributes().getFnAttributes();
-    //llvm::AttrBuilder CurFuncAttrBuilder{CurFuncAttrSet, 0};
-
-    //if (CurFuncAttrBuilder.overlaps(m_AttrBuilder))
-      //m_PotentialCallers.insert(
-          //const_cast<rm_const_ptr_t<decltype(CurFunc)>>(CurFunc));
-  //}
-
-  //return false;
-//}
-
 bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   llvm::CallGraph &CG =
       getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
-
-  // selection phase
-
-  //for (auto &Node : SCC) {
-    //auto *Func = Node->getFunction();
-    //if (Func)
-      //m_PotentialCallers.insert(Func);
-
-    //PLUGIN_OUT << "ref #: " << Node->getNumReferences() << "\n";
-  //}
 
   return false;
 }
