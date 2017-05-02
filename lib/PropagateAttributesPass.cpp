@@ -2,13 +2,14 @@
 //
 //
 
-#include "PropagateAttributesPass.hpp"
-
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
-#include "llvm/ADT/SmallPtrSet.h"
-// using llvm::SmallPtrSet
+#include "llvm/IR/LegacyPassManager.h"
+// using llvm::PassManagerBase
+
+#include "llvm/IR/Module.h"
+// using llvm::Module
 
 #include "llvm/IR/Function.h"
 // using llvm::Function
@@ -17,15 +18,15 @@
 // using llvm::Attribute
 // using llvm::AttrBuilder
 
-#include "llvm/IR/LegacyPassManager.h"
-// using llvm::PassManagerBase
-
 #include "llvm/Analysis/CallGraph.h"
 // using llvm::CallGraph
 
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
+
+#include "llvm/ADT/SmallPtrSet.h"
+// using llvm::SmallPtrSet
 
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
@@ -89,7 +90,7 @@ static llvm::RegisterStandardPasses RegisterPropagateAttributesPass(
 namespace {
 
 PropagateAttributesPass::PropagateAttributesPass()
-    : llvm::CallGraphSCCPass(ID) {
+    : llvm::ModulePass(ID) {
   m_CustomAttributes.insert("icsa.dynapar.performs-io");
 
   // builtin attributes
@@ -102,42 +103,42 @@ PropagateAttributesPass::PropagateAttributesPass()
 }
 
 void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
   AU.addRequired<llvm::CallGraphWrapperPass>();
-  AU.setPreservesAll();
 
   return;
 }
 
-bool PropagateAttributesPass::doInitialization(llvm::CallGraph &CG) {
-  for (const auto &CurNode : CG) {
-    auto *CurFunc = CurNode.first;
-    if (!CurFunc)
-      continue;
+//bool PropagateAttributesPass::doInitialization(llvm::CallGraph &CG) {
+  //for (const auto &CurNode : CG) {
+    //auto *CurFunc = CurNode.first;
+    //if (!CurFunc)
+      //continue;
 
-    const auto &CurFuncAttrSet = CurFunc->getAttributes().getFnAttributes();
-    llvm::AttrBuilder CurFuncAttrBuilder{CurFuncAttrSet, 0};
+    //const auto &CurFuncAttrSet = CurFunc->getAttributes().getFnAttributes();
+    //llvm::AttrBuilder CurFuncAttrBuilder{CurFuncAttrSet, 0};
 
-    if (CurFuncAttrBuilder.overlaps(m_AttrBuilder))
-      m_PotentialCallers.insert(
-          const_cast<rm_const_ptr_t<decltype(CurFunc)>>(CurFunc));
-  }
+    //if (CurFuncAttrBuilder.overlaps(m_AttrBuilder))
+      //m_PotentialCallers.insert(
+          //const_cast<rm_const_ptr_t<decltype(CurFunc)>>(CurFunc));
+  //}
 
-  return false;
-}
+  //return false;
+//}
 
-bool PropagateAttributesPass::runOnSCC(llvm::CallGraphSCC &SCC) {
+bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   llvm::CallGraph &CG =
       getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
 
   // selection phase
 
-  for (auto &Node : SCC) {
-    auto *Func = Node->getFunction();
-    if (Func)
-      m_PotentialCallers.insert(Func);
+  //for (auto &Node : SCC) {
+    //auto *Func = Node->getFunction();
+    //if (Func)
+      //m_PotentialCallers.insert(Func);
 
-    PLUGIN_OUT << "ref #: " << Node->getNumReferences() << "\n";
-  }
+    //PLUGIN_OUT << "ref #: " << Node->getNumReferences() << "\n";
+  //}
 
   return false;
 }

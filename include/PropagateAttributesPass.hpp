@@ -5,14 +5,11 @@
 #ifndef PROPAGATEATTRIBUTESPASS_HPP
 #define PROPAGATEATTRIBUTESPASS_HPP
 
-#include "llvm/Analysis/CallGraphSCCPass.h"
-// using llvm::CallGraphSCCPass
-// using llvm::CallGraphSCC
-
 // TODO to move to source file
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SCCIterator.h"
 
 template <typename T> struct rm_const_ptr { using type = T; };
 template <typename T> struct rm_const_ptr<const T *> { using type = T *; };
@@ -25,22 +22,22 @@ template <typename T> using rm_const_ptr_t = typename rm_const_ptr<T>::type;
 // using std::string
 
 namespace llvm {
-class CallGraphSCCPass;
-class CallGraphSCC;
-class CallGraph;
+class ModulePass;
 class AnalysisUsage;
+class CallGraph;
 class AttrBuilder;
-template <typename PtrType, unsigned> class SmallPtrSet;
+class Module;
 class Function;
 template <typename PtrType, unsigned> class SmallPtrSet;
 } // namespace llvm end
 
 using FuncSet = llvm::SmallPtrSet<llvm::Function *, 8>;
-using ConstFuncSet = llvm::SmallPtrSet<const llvm::Function *, 8>;
+// using ConstFuncSet = llvm::SmallPtrSet<const llvm::Function *, 8>;
+using ConstFuncSet = std::set<const llvm::Function *>;
 
 namespace {
 
-struct PropagateAttributesPass : public llvm::CallGraphSCCPass {
+struct PropagateAttributesPass : public llvm::ModulePass {
   static char ID;
 
   static ConstFuncSet filterFuncWithAttributes(const llvm::CallGraph &CG,
@@ -52,7 +49,6 @@ struct PropagateAttributesPass : public llvm::CallGraphSCCPass {
         continue;
       auto *CurFunc = CGNode.first;
 
-      llvm::outs() << CurFunc->getAttributes().getNumSlots();
       llvm::AttrBuilder CurAB(CurFunc->getAttributes(),
                               llvm::AttributeSet::FunctionIndex);
 
@@ -63,10 +59,35 @@ struct PropagateAttributesPass : public llvm::CallGraphSCCPass {
     return Funcs;
   }
 
+  static ConstFuncSet getSCCCallers(const llvm::CallGraph &CG,
+                                    const ConstFuncSet &Callees) {
+    ConstFuncSet SCCFuncs;
+    ConstFuncSet SCCCallers;
+
+    //for (const auto &CGNode : CGSCC)
+      //SCCFuncs.insert(CGNode->getFunction());
+
+    //std::for_each(std::begin(SCCFuncs), std::end(SCCFuncs), [&](const auto &e) {
+      //if (Callees.end() != Callees.find(e))
+        //SCCCallers.insert(e);
+      //llvm::outs() << e->getName() << "\n";
+    //});
+
+    // std::find_if(std::begin(CGSCC), std::end(CGSCC), [&](const auto &e) {
+    // for (const auto &callee : Callees) {
+    // if (callee == e->getFunction())
+    // llvm::outs() << "---" << *callee;
+    //}
+
+    // return true;
+    //});
+
+    return SCCCallers;
+  }
+
   PropagateAttributesPass();
-  bool doInitialization(llvm::CallGraph &CG) override;
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-  bool runOnSCC(llvm::CallGraphSCC &SCC) override;
+  bool runOnModule(llvm::Module &M) override;
 
 private:
   llvm::AttrBuilder m_AttrBuilder;
