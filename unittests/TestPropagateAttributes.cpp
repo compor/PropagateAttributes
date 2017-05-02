@@ -224,8 +224,17 @@ TEST_F(TestPropagateAttributes, HasRequestedAttribute) {
   ExpectTestPass(trm);
 }
 
-TEST_F(TestPropagateAttributes, TransitiveCallers) {
+TEST_F(TestPropagateAttributes, TransitiveCallersWithLeafSCC) {
   ParseAssemblyFile("test04.ll");
+
+  test_result_map trm;
+
+  trm.insert({"transitive function callers found", 2});
+  ExpectTestPass(trm);
+}
+
+TEST_F(TestPropagateAttributes, TransitiveCallersWithNonLeafSCC) {
+  ParseAssemblyFile("test05.ll");
 
   test_result_map trm;
 
