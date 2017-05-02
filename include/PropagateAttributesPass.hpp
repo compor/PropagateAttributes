@@ -6,10 +6,11 @@
 #define PROPAGATEATTRIBUTESPASS_HPP
 
 // TODO to move to source file
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Analysis/CallGraph.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
+#include "llvm/Support/raw_ostream.h"
 
 template <typename T> struct rm_const_ptr { using type = T; };
 template <typename T> struct rm_const_ptr<const T *> { using type = T *; };
@@ -47,8 +48,8 @@ struct PropagateAttributesPass : public llvm::ModulePass {
     for (const auto &CGNode : CG) {
       if (!CGNode.first)
         continue;
-      auto *CurFunc = CGNode.first;
 
+      auto *CurFunc = CGNode.first;
       llvm::AttrBuilder CurAB(CurFunc->getAttributes(),
                               llvm::AttributeSet::FunctionIndex);
 
@@ -59,30 +60,45 @@ struct PropagateAttributesPass : public llvm::ModulePass {
     return Funcs;
   }
 
-  static ConstFuncSet getSCCCallers(const llvm::CallGraph &CG,
+  using CGSCC_t = std::vector<llvm::CallGraphNode *>;
+
+  static bool isCallerOf(const CGSCC_t &SCC,
+                         const ConstFuncSet &PotentialCallees) {
+    for (const auto &SCCNode : SCC) {
+      const auto &found = std::find_if(
+          std::begin(*SCCNode), std::end(*SCCNode), [&](const auto &e) {
+            const auto &Callee = e.second->getFunction();
+            return PotentialCallees.end() != PotentialCallees.find(Callee);
+          });
+
+      if (found != std::end(*SCCNode))
+        return true;
+    }
+
+    return false;
+  }
+
+  static ConstFuncSet getTransitiveCallers(llvm::CallGraph &CG,
                                     const ConstFuncSet &Callees) {
-    ConstFuncSet SCCFuncs;
-    ConstFuncSet SCCCallers;
+    ConstFuncSet TransitiveCallers{Callees};
 
-    //for (const auto &CGNode : CGSCC)
-      //SCCFuncs.insert(CGNode->getFunction());
+    llvm::scc_iterator<llvm::CallGraph *> SCCIter = llvm::scc_begin(&CG);
+    decltype(SCCIter) SCCIterEnd = llvm::scc_end(&CG);
 
-    //std::for_each(std::begin(SCCFuncs), std::end(SCCFuncs), [&](const auto &e) {
-      //if (Callees.end() != Callees.find(e))
-        //SCCCallers.insert(e);
-      //llvm::outs() << e->getName() << "\n";
-    //});
+    for (; SCCIter != SCCIterEnd; ++SCCIter) {
+      auto &CurSCC = *SCCIter;
 
-    // std::find_if(std::begin(CGSCC), std::end(CGSCC), [&](const auto &e) {
-    // for (const auto &callee : Callees) {
-    // if (callee == e->getFunction())
-    // llvm::outs() << "---" << *callee;
-    //}
+      if (isCallerOf(CurSCC, TransitiveCallers))
+        for (const auto &e : CurSCC)
+          TransitiveCallers.insert(e->getFunction());
 
-    // return true;
-    //});
+      TransitiveCallers.erase(nullptr);
+    }
 
-    return SCCCallers;
+    for(const auto &e : Callees)
+      TransitiveCallers.erase(e);
+
+    return TransitiveCallers;
   }
 
   PropagateAttributesPass();

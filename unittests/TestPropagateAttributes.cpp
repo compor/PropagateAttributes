@@ -95,7 +95,7 @@ public:
     llvm::raw_string_ostream os(errMsg);
     err.print("", os);
 
-    if(llvm::verifyModule(*m_Module, &(llvm::errs())))
+    if (llvm::verifyModule(*m_Module, &(llvm::errs())))
       llvm::report_fatal_error("module verification failed\n");
 
     if (!m_Module)
@@ -124,37 +124,54 @@ public:
       }
 
       void getAnalysisUsage(llvm::AnalysisUsage &AU) const override {
-        AU.setPreservesAll();
-        //AU.addRequiredTransitive<llvm::CallGraphWrapperPass>();
+        AU.setPreservesCFG();
+        AU.addRequired<llvm::CallGraphWrapperPass>();
 
         return;
       }
 
       bool runOnModule(llvm::Module &M) override {
         test_result_map::const_iterator found;
-        const auto &CG = llvm::CallGraph(M);
+        auto &CG = getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
 
         llvm::AttrBuilder AB;
         AB.addAttribute("foo");
         const auto &funcs =
             PropagateAttributesPass::filterFuncWithAttributes(CG, AB);
 
+        ConstFuncSet callees{M.getFunction("foo")};
+        const auto &callers =
+            PropagateAttributesPass::getTransitiveCallers(CG, callees);
+
         // subcase
         found = lookup("functions found");
+        if (found != std::end(m_trm)) {
+          const auto &ev1 =
+              boost::apply_visitor(test_result_visitor(), found->second);
+          const auto &ff = funcs.size();
 
-        const auto &ff = funcs.size();
-        const auto &ev = boost::apply_visitor(test_result_visitor(), found->second);
-        EXPECT_EQ(ev, ff) << found->first;
+          EXPECT_EQ(ev1, ff) << found->first;
+        }
+
+        // subcase
+        found = lookup("transitive function callers found");
+        if (found != std::end(m_trm)) {
+          const auto &ev2 =
+              boost::apply_visitor(test_result_visitor(), found->second);
+          const auto &fc = callers.size();
+
+          EXPECT_EQ(ev2, fc) << found->first;
+        }
 
         return false;
       }
 
       test_result_map::const_iterator lookup(const std::string &subcase) {
         auto found = m_trm.find(subcase);
-        if (m_trm.end() == found) {
-          llvm::errs() << "subcase: " << subcase << " test data not found\n";
-          std::abort();
-        }
+        // if (m_trm.end() == found) {
+        // llvm::errs() << "subcase: " << subcase << " test data not found\n";
+        // std::abort();
+        //}
 
         return found;
       }
@@ -203,6 +220,15 @@ TEST_F(TestPropagateAttributes, HasRequestedAttribute) {
   test_result_map trm;
 
   trm.insert({"functions found", 1});
+  ExpectTestPass(trm);
+}
+
+TEST_F(TestPropagateAttributes, TransitiveCallers) {
+  ParseAssemblyFile("test04.ll");
+
+  test_result_map trm;
+
+  trm.insert({"transitive function callers found", 2});
   ExpectTestPass(trm);
 }
 
