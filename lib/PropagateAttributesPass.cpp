@@ -8,6 +8,9 @@
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
 
+//#include "llvm/IR/LLVMContext.h"
+// using llvm::getGlobalContext
+
 #include "llvm/IR/Module.h"
 // using llvm::Module
 
@@ -24,9 +27,6 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
-
-#include "llvm/ADT/SmallPtrSet.h"
-// using llvm::SmallPtrSet
 
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::list
@@ -134,10 +134,18 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   checkCmdLineOptions(TIAttributesListOptions);
 
-  llvm::CallGraph &CG =
-      getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
+  const auto &CG = getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
+  llvm::AttrBuilder AB;
 
   for (const auto &e : TDAttributesListOptions) {
+    AB.addAttribute(e);
+
+    const auto &funcs = filterFuncWithAttributes(CG, AB);
+    const auto &callers = getTransitiveCallers(CG, funcs);
+    for (auto &caller : callers)
+      caller->addFnAttr(e);
+
+    AB.clear();
   }
 
   for (const auto &e : TIAttributesListOptions) {

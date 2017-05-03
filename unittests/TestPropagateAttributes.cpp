@@ -139,9 +139,9 @@ public:
         const auto &funcs =
             PropagateAttributesPass::filterFuncWithAttributes(CG, AB);
 
-        ConstFuncSet callees;
+        FuncSet callees;
 
-        std::for_each(std::begin(M), std::end(M), [&](const auto &e) {
+        std::for_each(std::begin(M), std::end(M), [&](auto &e) {
           if (e.getName().startswith("test"))
             callees.insert(&e);
         });
