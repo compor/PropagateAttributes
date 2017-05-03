@@ -139,7 +139,13 @@ public:
         const auto &funcs =
             PropagateAttributesPass::filterFuncWithAttributes(CG, AB);
 
-        ConstFuncSet callees{M.getFunction("foo")};
+        ConstFuncSet callees;
+
+        std::for_each(std::begin(M), std::end(M), [&](const auto &e) {
+          if (e.getName().startswith("test"))
+            callees.insert(&e);
+        });
+
         const auto &callers =
             PropagateAttributesPass::getTransitiveCallers(CG, callees);
 

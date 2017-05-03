@@ -1,3 +1,4 @@
+
 define void @qux() {
   call void @bar()
   call void @quz()
@@ -5,7 +6,7 @@ define void @qux() {
 }
 
 define void @baz() {
-  call void @foo()
+  call void @test()
   ret void
 }
 
@@ -20,11 +21,11 @@ define void @quz() {
 }
 
 define void @bar() {
-  call void @foo()
+  call void @test()
   ret void
 }
 
-define void @foo() {
+define void @test() {
   call void @bar()
   call void @blep()
   ret void
