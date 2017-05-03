@@ -257,5 +257,14 @@ TEST_F(TestPropagateAttributes, TransitiveCallersWithNonLeafSCCWithTwoEntries) {
   ExpectTestPass(trm);
 }
 
+TEST_F(TestPropagateAttributes, TransitiveCallersWithTwoStartingSCCs) {
+  ParseAssemblyFile("test07.ll");
+
+  test_result_map trm;
+
+  trm.insert({"transitive function callers found", 4});
+  ExpectTestPass(trm);
+}
+
 } // namespace anonymous end
 } // namespace icsa end
