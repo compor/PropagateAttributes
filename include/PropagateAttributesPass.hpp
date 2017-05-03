@@ -79,7 +79,9 @@ struct PropagateAttributesPass : public llvm::ModulePass {
   }
 
   static ConstFuncSet getTransitiveCallers(llvm::CallGraph &CG,
-                                    const ConstFuncSet &Callees) {
+                                           const ConstFuncSet &Callees) {
+    // initially add the callees in the set in order to find their immediate
+    // callers, but remove them once done
     ConstFuncSet TransitiveCallers{Callees};
 
     llvm::scc_iterator<llvm::CallGraph *> SCCIter = llvm::scc_begin(&CG);
@@ -92,10 +94,11 @@ struct PropagateAttributesPass : public llvm::ModulePass {
         for (const auto &e : CurSCC)
           TransitiveCallers.insert(e->getFunction());
 
+      // remove external node represented as null value
       TransitiveCallers.erase(nullptr);
     }
 
-    for(const auto &e : Callees)
+    for (const auto &e : Callees)
       TransitiveCallers.erase(e);
 
     return TransitiveCallers;
@@ -106,9 +109,14 @@ struct PropagateAttributesPass : public llvm::ModulePass {
   bool runOnModule(llvm::Module &M) override;
 
 private:
+  llvm::Attribute::AttrKind lookupTIAttribute(const llvm::StringRef &name);
+  void checkCmdLineOptions(const llvm::cl::list<std::string> &options);
+
   llvm::AttrBuilder m_AttrBuilder;
   llvm::SmallPtrSet<llvm::Function *, 8> m_PotentialCallers;
   std::set<std::string> m_CustomAttributes;
+
+  static const std::map<llvm::StringRef, llvm::Attribute::AttrKind> TIAttrs;
 };
 
 } // namespace unnamed end

@@ -28,12 +28,18 @@
 #include "llvm/ADT/SmallPtrSet.h"
 // using llvm::SmallPtrSet
 
+#include "llvm/Support/CommandLine.h"
+// using llvm::cl::list
+
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
 
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
 // using llvm::dbgs
+
+#include <string>
+// using std::string
 
 #include <algorithm>
 // using std::for_each
@@ -85,6 +91,23 @@ static llvm::RegisterStandardPasses RegisterPropagateAttributesPass(
     llvm::PassManagerBuilder::EP_EarlyAsPossible,
     registerPropagateAttributesPass);
 
+// command-line options
+
+const std::map<llvm::StringRef, llvm::Attribute::AttrKind>
+    PropagateAttributesPass::TIAttrs{{"noreturn", llvm::Attribute::NoReturn}};
+
+static llvm::cl::list<std::string> TDAttributesListOptions(
+    "td-attrs",
+    llvm::cl::desc(
+        "Specify target-dependent attributes to propagate up the call graph"),
+    llvm::cl::CommaSeparated, llvm::cl::ZeroOrMore, llvm::cl::NotHidden);
+
+static llvm::cl::list<std::string> TIAttributesListOptions(
+    "ti-attrs",
+    llvm::cl::desc(
+        "Specify target-independent attributes to propagate up the call graph"),
+    llvm::cl::CommaSeparated, llvm::cl::ZeroOrMore, llvm::cl::NotHidden);
+
 //
 
 namespace {
@@ -109,10 +132,46 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
+  checkCmdLineOptions(TIAttributesListOptions);
+
   llvm::CallGraph &CG =
       getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
 
+  for (const auto &e : TDAttributesListOptions) {
+  }
+
+  for (const auto &e : TIAttributesListOptions) {
+  }
+
   return false;
+}
+
+void PropagateAttributesPass::checkCmdLineOptions(
+    const llvm::cl::list<std::string> &options) {
+  for (const auto &e : options) {
+    const auto &foundKind = lookupTIAttribute(e);
+
+    if (llvm::Attribute::None == foundKind) {
+      PLUGIN_ERR << "could not find option for target independent attribute: \'"
+                 << e << "\'\n";
+
+      PLUGIN_ERR << "supported attributes are: ";
+
+      for (const auto &e : TIAttrs)
+        PLUGIN_ERR << "\'" << e.first << "\' ";
+      PLUGIN_ERR << "\n";
+
+      std::exit(EXIT_FAILURE);
+    }
+  }
+
+  return;
+}
+
+llvm::Attribute::AttrKind
+PropagateAttributesPass::lookupTIAttribute(const llvm::StringRef &name) {
+  const auto found = TIAttrs.find(name);
+  return found == std::end(TIAttrs) ? llvm::Attribute::None : found->second;
 }
 
 } // namespace unnamed end
