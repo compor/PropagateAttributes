@@ -140,10 +140,7 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   for (const auto &e : TDAttributesListOptions) {
     AB.addAttribute(e);
 
-    const auto &funcs = filterFuncWithAttributes(CG, AB);
-    const auto &callers = getTransitiveCallers(CG, funcs);
-    for (auto &caller : callers)
-      caller->addFnAttr(e);
+    propagateAttributes(CG, AB);
 
     AB.clear();
   }

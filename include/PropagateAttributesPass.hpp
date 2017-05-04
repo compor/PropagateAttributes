@@ -101,6 +101,33 @@ struct PropagateAttributesPass : public llvm::ModulePass {
     return TransitiveCallers;
   }
 
+  static bool propagateAttributes(const llvm::CallGraph &CG,
+                                  const llvm::AttrBuilder &NewAB) {
+    bool hasChanged = false;
+    auto curIndex = llvm::AttributeSet::FunctionIndex;
+
+    const auto &funcs = filterFuncWithAttributes(CG, NewAB);
+    const auto &callers = getTransitiveCallers(CG, funcs);
+
+    for (auto &caller : callers) {
+      auto &curCtx = caller->getContext();
+      const auto &callerAS = caller->getAttributes();
+      const auto &newAS = llvm::AttributeSet::get(curCtx, curIndex, NewAB);
+
+      if (callerAS != newAS) {
+        llvm::AttrBuilder CallerAB{callerAS, curIndex};
+        CallerAB.merge(NewAB);
+
+        caller->addAttributes(
+            curIndex, llvm::AttributeSet::get(curCtx, curIndex, CallerAB));
+
+        hasChanged = true;
+      }
+    }
+
+    return hasChanged;
+  }
+
   PropagateAttributesPass();
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
   bool runOnModule(llvm::Module &M) override;
