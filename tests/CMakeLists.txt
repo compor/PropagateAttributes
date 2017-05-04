@@ -32,8 +32,3 @@ add_dependencies(lit_tests ${TESTEE_LIB})
 
 add_dependencies(tests lit_tests)
 
-
-add_custom_command(TARGET lit_tests PRE_BUILD COMMAND 
-  ${CMAKE_COMMAND} -E copy_directory 
-  "${CMAKE_CURRENT_SOURCE_DIR}/data/" ${CMAKE_CURRENT_BINARY_DIR})
-

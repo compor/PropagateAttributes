@@ -5,7 +5,7 @@ import platform
 from lit import formats
 
 config.name = 'propagate-attributes-tests'
-config.test_source_root = '.'
+config.test_source_root = '@CMAKE_CURRENT_SOURCE_DIR@'
 
 # Configuration file for the 'lit' test runner.
 config.test_format = formats.ShTest(True)
