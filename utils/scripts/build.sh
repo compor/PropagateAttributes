@@ -25,7 +25,7 @@ fi
 
 # print configuration vars
 
-echo "info: printing configuation vars"
+echo "info: printing configuration vars"
 echo "info: source dir: ${SRC_DIR}"
 echo "info: install dir: ${INSTALL_DIR}"
 echo ""
