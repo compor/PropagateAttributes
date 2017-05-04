@@ -113,14 +113,6 @@ static llvm::cl::list<std::string> TIAttributesListOptions(
 namespace {
 
 PropagateAttributesPass::PropagateAttributesPass() : llvm::ModulePass(ID) {
-  m_CustomAttributes.insert("icsa.dynapar.performs-io");
-
-  // builtin attributes
-  m_AttrBuilder.addAttribute(llvm::Attribute::NoReturn);
-
-  std::for_each(std::begin(m_CustomAttributes), std::end(m_CustomAttributes),
-                [&](auto &e) { m_AttrBuilder.addAttribute(e); });
-
   return;
 }
 

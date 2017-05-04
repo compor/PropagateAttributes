@@ -136,9 +136,6 @@ private:
   llvm::Attribute::AttrKind lookupTIAttribute(const llvm::StringRef &name);
   void checkCmdLineOptions(const llvm::cl::list<std::string> &options);
 
-  llvm::AttrBuilder m_AttrBuilder;
-  std::set<std::string> m_CustomAttributes;
-
   static const std::map<llvm::StringRef, llvm::Attribute::AttrKind> TIAttrs;
 };
 
