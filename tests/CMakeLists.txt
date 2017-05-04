@@ -1,11 +1,16 @@
 
 include(FindPythonModule)
 
-find_python_module(lit REQUIRED)
+find_python_module(lit)
 
-message("---- ${LLVM_TOOLS_BINARY_DIR}")
+if(NOT PY_LIT_FOUND)
+  message(WARNING "Could not find lit; skipping tests")
+
+  return()
+endif()
+
 if(NOT EXISTS ${LLVM_TOOLS_BINARY_DIR}/FileCheck)
-  message(WARNING "Could not find FileCheck")
+  message(WARNING "Could not find FileCheck; skipping tests")
 
   return()
 endif()
