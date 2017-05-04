@@ -15,20 +15,6 @@ find_package(Boost REQUIRED)
 
 # configuration
 
-# TODO better native filename deduction
-get_property(lib_prefix TARGET ${TESTEE_LIB} PROPERTY PREFIX)
-get_property(lib_suffix TARGET ${TESTEE_LIB} PROPERTY SUFFIX)
-
-if(NOT lib_prefix)
-  set(lib_prefix "lib")
-endif()
-
-if(NOT lib_suffix)
-  set(lib_suffix ".so")
-endif()
-
-set(TESTEE_LIB_FILENAME "${lib_prefix}${TESTEE_LIB}${lib_suffix}")
-
 # aggregate unit test targets under a pseudo-target
 add_custom_target(unittests)
 
