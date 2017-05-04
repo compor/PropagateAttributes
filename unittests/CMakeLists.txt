@@ -83,6 +83,6 @@ set(TEST_DATA_DIR "${CMAKE_CURRENT_BINARY_DIR}/data")
 file(MAKE_DIRECTORY ${TEST_DATA_DIR})
 
 add_custom_command(TARGET unittests PRE_BUILD COMMAND 
-  ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/data/" ${TEST_DATA_DIR})
-
+  ${CMAKE_COMMAND} -E copy_directory 
+  "${CMAKE_CURRENT_SOURCE_DIR}/data/" ${TEST_DATA_DIR})
 
