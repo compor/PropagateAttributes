@@ -125,6 +125,7 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   checkCmdLineOptions(TIAttributesListOptions);
+  bool hasChanged = false;
 
   const auto &CG = getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
   llvm::AttrBuilder AB;
@@ -132,7 +133,7 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   for (const auto &e : TDAttributesListOptions) {
     AB.addAttribute(e);
 
-    propagateAttributes(CG, AB);
+    hasChanged = propagateAttributes(CG, AB);
 
     AB.clear();
   }
@@ -140,7 +141,7 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   for (const auto &e : TIAttributesListOptions) {
   }
 
-  return false;
+  return hasChanged;
 }
 
 void PropagateAttributesPass::checkCmdLineOptions(
