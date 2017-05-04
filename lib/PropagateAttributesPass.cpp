@@ -132,13 +132,14 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
 
   for (const auto &e : TDAttributesListOptions) {
     AB.addAttribute(e);
-
     hasChanged = propagateAttributes(CG, AB);
-
     AB.clear();
   }
 
   for (const auto &e : TIAttributesListOptions) {
+    AB.addAttribute(lookupTIAttribute(e));
+    hasChanged = propagateAttributes(CG, AB);
+    AB.clear();
   }
 
   return hasChanged;
