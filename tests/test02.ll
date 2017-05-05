@@ -2,7 +2,8 @@
 
 ; propagate the desired attribute from a function call node in the call graph
 ; SCC, from a node that contains more than one elements, up the call chain
-; the SCC under test is a terminal node in terms of topological sorting
+; the SCC under test is NOT a terminal node in terms of topological sorting,
+; since it calls anoter function
 
 define void @qux() {
 ; CHECK-LABEL: qux
@@ -39,10 +40,17 @@ define void @bar() {
   ret void
 }
 
+define void @leaf() {
+; CHECK-LABEL: leaf
+; CHECK-NOT: #0
+  ret void
+}
+
 define void @test() #0 {
 ; CHECK-LABEL: test
 ; CHECK: #0
   call void @bar()
+  call void @leaf()
   ret void
 }
 
