@@ -128,18 +128,19 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   bool hasChanged = false;
 
   const auto &CG = getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
-  llvm::AttrBuilder AB;
+  llvm::AttrBuilder tdAB;
 
   for (const auto &e : TDAttributesListOptions) {
-    AB.addAttribute(e);
-    hasChanged = propagateAttributes(CG, AB);
-    AB.clear();
+    tdAB.addAttribute(e);
+    hasChanged = propagateAttributes(CG, tdAB);
+    tdAB.clear();
   }
 
+  llvm::AttrBuilder tiAB;
   for (const auto &e : TIAttributesListOptions) {
-    AB.addAttribute(lookupTIAttribute(e));
-    hasChanged = propagateAttributes(CG, AB);
-    AB.clear();
+    tiAB.addAttribute(lookupTIAttribute(e));
+    hasChanged = propagateAttributes(CG, tiAB);
+    tiAB.clear();
   }
 
   return hasChanged;
