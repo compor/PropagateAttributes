@@ -18,7 +18,7 @@ endif()
 # configuration
 
 # aggregate unit test targets under a pseudo-target
-add_custom_target(tests)
+add_custom_target(check)
 
 set(PRJ_TEST_CONFIG_FILE "lit.cfg")
 
@@ -30,5 +30,5 @@ add_custom_target(lit_tests
 
 add_dependencies(lit_tests ${TESTEE_LIB})
 
-add_dependencies(tests lit_tests)
+add_dependencies(check lit_tests)
 
