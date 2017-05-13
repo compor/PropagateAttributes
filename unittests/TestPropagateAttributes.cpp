@@ -175,7 +175,7 @@ public:
       test_result_map::const_iterator lookup(const std::string &subcase,
                                              bool fatalIfMissing = false) {
         auto found = m_trm.find(subcase);
-        if (fatalIfMissing && m_trm.end() == found) {
+        if (fatalIfMissing && std::end(m_trm) == found) {
           llvm::errs() << "subcase: " << subcase << " test data not found\n";
           std::abort();
         }
@@ -205,7 +205,6 @@ protected:
 
 TEST_F(TestPropagateAttributes, NoAttributes) {
   ParseAssemblyFile("test01.ll");
-
   test_result_map trm;
 
   trm.insert({"functions found", 0});
@@ -214,7 +213,6 @@ TEST_F(TestPropagateAttributes, NoAttributes) {
 
 TEST_F(TestPropagateAttributes, DoesNotHaveRequestedAttribute) {
   ParseAssemblyFile("test02.ll");
-
   test_result_map trm;
 
   trm.insert({"functions found", 0});
@@ -223,7 +221,6 @@ TEST_F(TestPropagateAttributes, DoesNotHaveRequestedAttribute) {
 
 TEST_F(TestPropagateAttributes, HasRequestedAttribute) {
   ParseAssemblyFile("test03.ll");
-
   test_result_map trm;
 
   trm.insert({"functions found", 1});
@@ -232,7 +229,6 @@ TEST_F(TestPropagateAttributes, HasRequestedAttribute) {
 
 TEST_F(TestPropagateAttributes, TransitiveCallersWithLeafSCC) {
   ParseAssemblyFile("test04.ll");
-
   test_result_map trm;
 
   trm.insert({"transitive function callers found", 2});
@@ -241,7 +237,6 @@ TEST_F(TestPropagateAttributes, TransitiveCallersWithLeafSCC) {
 
 TEST_F(TestPropagateAttributes, TransitiveCallersWithNonLeafSCC) {
   ParseAssemblyFile("test05.ll");
-
   test_result_map trm;
 
   trm.insert({"transitive function callers found", 2});
@@ -250,7 +245,6 @@ TEST_F(TestPropagateAttributes, TransitiveCallersWithNonLeafSCC) {
 
 TEST_F(TestPropagateAttributes, TransitiveCallersWithNonLeafSCCWithTwoEntries) {
   ParseAssemblyFile("test06.ll");
-
   test_result_map trm;
 
   trm.insert({"transitive function callers found", 5});
@@ -259,7 +253,6 @@ TEST_F(TestPropagateAttributes, TransitiveCallersWithNonLeafSCCWithTwoEntries) {
 
 TEST_F(TestPropagateAttributes, TransitiveCallersWithTwoStartingSCCs) {
   ParseAssemblyFile("test07.ll");
-
   test_result_map trm;
 
   trm.insert({"transitive function callers found", 4});
@@ -269,7 +262,6 @@ TEST_F(TestPropagateAttributes, TransitiveCallersWithTwoStartingSCCs) {
 TEST_F(TestPropagateAttributes,
        TransitiveCallersWithTwoStartingNonOverlappingSCCs) {
   ParseAssemblyFile("test08.ll");
-
   test_result_map trm;
 
   trm.insert({"transitive function callers found", 4});
