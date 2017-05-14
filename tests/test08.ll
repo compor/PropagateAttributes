@@ -1,4 +1,4 @@
-; RUN: opt -load %bindir/%testeelib -propagate-attributes -ti-attr=noreturn -S < %s | FileCheck %s
+; RUN: opt -load %bindir/%testeelib -propagate-attributes -pattr-ti-attr=noreturn -S < %s | FileCheck %s
 
 ; propagate the desired attribute from a function call node in the call graph
 ; SCC, from a node that contains more than one elements, up the call chain

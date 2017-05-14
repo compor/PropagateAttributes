@@ -1,4 +1,4 @@
-; RUN: opt -load %bindir/%testeelib -propagate-attributes -ti-attr=noreturn -td-attr=attr1 -S < %s | FileCheck --check-prefix=CHECK-MERGED-ATTR %s
+; RUN: opt -load %bindir/%testeelib -propagate-attributes -pattr-ti-attr=noreturn -pattr-td-attr=attr1 -S < %s | FileCheck --check-prefix=CHECK-MERGED-ATTR %s
 
 ; continuation of previous test, but checking that the target independent
 ; attribute is also present in the new merged attribute node

@@ -97,13 +97,13 @@ const std::map<llvm::StringRef, llvm::Attribute::AttrKind>
     PropagateAttributesPass::TIAttrs{{"noreturn", llvm::Attribute::NoReturn}};
 
 static llvm::cl::list<std::string> TDAttributesListOptions(
-    "td-attr",
+    "pattr-td-attr",
     llvm::cl::desc(
         "Specify target-dependent attributes to propagate up the call graph"),
     llvm::cl::CommaSeparated, llvm::cl::ZeroOrMore, llvm::cl::NotHidden);
 
 static llvm::cl::list<std::string> TIAttributesListOptions(
-    "ti-attr",
+    "pattr-ti-attr",
     llvm::cl::desc(
         "Specify target-independent attributes to propagate up the call graph"),
     llvm::cl::CommaSeparated, llvm::cl::ZeroOrMore, llvm::cl::NotHidden);
