@@ -2,24 +2,16 @@
 //
 //
 
+#define DEBUG_TYPE "propagate_attributes"
+
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
 
-//#include "llvm/IR/LLVMContext.h"
-// using llvm::getGlobalContext
-
 #include "llvm/IR/Module.h"
 // using llvm::Module
-
-#include "llvm/IR/Function.h"
-// using llvm::Function
-
-#include "llvm/IR/Attributes.h"
-// using llvm::Attribute
-// using llvm::AttrBuilder
 
 #include "llvm/Analysis/CallGraph.h"
 // using llvm::CallGraph
@@ -28,8 +20,8 @@
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
 
-#include "llvm/Support/CommandLine.h"
-// using llvm::cl::list
+#include "llvm/ADT/StringRef.h"
+// using llvm::StringRef
 
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
@@ -38,15 +30,8 @@
 // using DEBUG macro
 // using llvm::dbgs
 
-#include <string>
-// using std::string
-
-#include <algorithm>
-// using std::for_each
-
+#include "PropagateAttributes.hpp"
 #include "PropagateAttributesPass.hpp"
-
-#define DEBUG_TYPE "propagate_attributes"
 
 #ifndef NDEBUG
 #define PLUGIN_OUT llvm::outs()
@@ -132,14 +117,14 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
 
   for (const auto &e : TDAttributesListOptions) {
     tdAB.addAttribute(e);
-    hasChanged = propagateAttributes(CG, tdAB);
+    hasChanged = PropagateAttributes::propagate(CG, tdAB);
     tdAB.clear();
   }
 
   llvm::AttrBuilder tiAB;
   for (const auto &e : TIAttributesListOptions) {
     tiAB.addAttribute(lookupTIAttribute(e));
-    hasChanged = propagateAttributes(CG, tiAB);
+    hasChanged = PropagateAttributes::propagate(CG, tiAB);
     tiAB.clear();
   }
 

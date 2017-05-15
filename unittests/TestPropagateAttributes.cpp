@@ -1,9 +1,15 @@
+//
+//
+//
 
 #include <memory>
 // using std::unique_ptr
 
 #include <map>
 // using std::map
+
+#include <algorithm>
+// using std::for_each
 
 #include <cassert>
 // using assert
@@ -12,10 +18,14 @@
 // using std::abort
 
 #include "llvm/IR/LLVMContext.h"
-// using llvm::LLVMContext
+// using llvm::getGlobalContext
 
 #include "llvm/IR/Module.h"
 // using llvm::Module
+
+#include "llvm/Analysis/CallGraph.h"
+// using llvm::CallGraphWrapperPass
+// using llvm::CallGraph
 
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::legacy::PassMananger
@@ -23,10 +33,6 @@
 #include "llvm/Pass.h"
 // using llvm::Pass
 // using llvm::PassInfo
-
-#include "llvm/Analysis/LoopInfo.h"
-// using llvm::LoopInfoWrapperPass
-// using llvm::LoopInfo
 
 #include "llvm/Support/SourceMgr.h"
 // using llvm::SMDiagnostic
@@ -49,7 +55,7 @@
 #include "boost/variant.hpp"
 // using boost::variant
 
-#include "PropagateAttributesPass.hpp"
+#include "PropagateAttributes.hpp"
 
 namespace icsa {
 namespace {
@@ -137,7 +143,7 @@ public:
         llvm::AttrBuilder AB;
         AB.addAttribute("foo");
         const auto &funcs =
-            PropagateAttributesPass::filterFuncWithAttributes(CG, AB);
+            PropagateAttributes::filterFuncWithAttributes(CG, AB);
 
         FuncSet callees;
 
@@ -147,7 +153,7 @@ public:
         });
 
         const auto &callers =
-            PropagateAttributesPass::getTransitiveCallers(CG, callees);
+            PropagateAttributes::getTransitiveCallers(CG, callees);
 
         // subcase
         found = lookup("functions found");
