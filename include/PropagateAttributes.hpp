@@ -23,15 +23,18 @@ template <typename T> using rm_const_ptr_t = typename rm_const_ptr<T>::type;
 
 using FuncSet = std::set<llvm::Function *>;
 
-namespace PropagateAttributes {
+class PropagateAttributes {
+public:
+  FuncSet filterFuncWithAttributes(const llvm::CallGraph &CG,
+                                   const llvm::AttrBuilder &AB);
+  FuncSet getTransitiveCallers(const llvm::CallGraph &CG,
+                               const FuncSet &Callees);
+  bool propagate(const llvm::CallGraph &CG, const llvm::AttrBuilder &NewAB);
 
-FuncSet filterFuncWithAttributes(const llvm::CallGraph &CG,
-                                 const llvm::AttrBuilder &AB);
+protected:
+  using CGSCC_t = std::vector<const llvm::CallGraphNode *>;
 
-FuncSet getTransitiveCallers(const llvm::CallGraph &CG, const FuncSet &Callees);
-
-bool propagate(const llvm::CallGraph &CG, const llvm::AttrBuilder &NewAB);
-
-} // namespace PropagateAttributes end
+  bool isCallerOf(const CGSCC_t &SCC, const FuncSet &PotentialCallees);
+};
 
 #endif // PROPAGATEATTRIBUTES_HPP

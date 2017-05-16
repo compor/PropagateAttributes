@@ -19,30 +19,9 @@
 
 #include "PropagateAttributes.hpp"
 
-namespace PropagateAttributes {
-
-namespace {
-using CGSCC_t = std::vector<const llvm::CallGraphNode *>;
-
-bool isCallerOf(const CGSCC_t &SCC, const FuncSet &PotentialCallees) {
-  for (const auto &SCCNode : SCC) {
-    const auto &found = std::find_if(
-        std::begin(*SCCNode), std::end(*SCCNode), [&](const auto &e) {
-          const auto &Callee = e.second->getFunction();
-          return PotentialCallees.end() != PotentialCallees.find(Callee);
-        });
-
-    if (found != std::end(*SCCNode))
-      return true;
-  }
-
-  return false;
-}
-
-} // namespace anonymous end
-
-FuncSet filterFuncWithAttributes(const llvm::CallGraph &CG,
-                                 const llvm::AttrBuilder &AB) {
+FuncSet
+PropagateAttributes::filterFuncWithAttributes(const llvm::CallGraph &CG,
+                                              const llvm::AttrBuilder &AB) {
   FuncSet Funcs;
 
   for (auto &CGNode : CG) {
@@ -60,8 +39,8 @@ FuncSet filterFuncWithAttributes(const llvm::CallGraph &CG,
   return Funcs;
 }
 
-FuncSet getTransitiveCallers(const llvm::CallGraph &CG,
-                             const FuncSet &Callees) {
+FuncSet PropagateAttributes::getTransitiveCallers(const llvm::CallGraph &CG,
+                                                  const FuncSet &Callees) {
   // initially add the callees in the set in order to find their immediate
   // callers, but remove them once done
   FuncSet TransitiveCallers{Callees};
@@ -88,7 +67,8 @@ FuncSet getTransitiveCallers(const llvm::CallGraph &CG,
   return TransitiveCallers;
 }
 
-bool propagate(const llvm::CallGraph &CG, const llvm::AttrBuilder &NewAB) {
+bool PropagateAttributes::propagate(const llvm::CallGraph &CG,
+                                    const llvm::AttrBuilder &NewAB) {
   bool hasChanged = false;
   auto curIndex = llvm::AttributeSet::FunctionIndex;
 
@@ -114,4 +94,20 @@ bool propagate(const llvm::CallGraph &CG, const llvm::AttrBuilder &NewAB) {
   return hasChanged;
 }
 
-} // namespace PropagateAttributes end
+// protected members
+
+bool PropagateAttributes::isCallerOf(const CGSCC_t &SCC,
+                                     const FuncSet &PotentialCallees) {
+  for (const auto &SCCNode : SCC) {
+    const auto &found = std::find_if(
+        std::begin(*SCCNode), std::end(*SCCNode), [&](const auto &e) {
+          const auto &Callee = e.second->getFunction();
+          return PotentialCallees.end() != PotentialCallees.find(Callee);
+        });
+
+    if (found != std::end(*SCCNode))
+      return true;
+  }
+
+  return false;
+}

@@ -142,8 +142,9 @@ public:
 
         llvm::AttrBuilder AB;
         AB.addAttribute("foo");
-        const auto &funcs =
-            PropagateAttributes::filterFuncWithAttributes(CG, AB);
+        PropagateAttributes propattr;
+
+        const auto &funcs = propattr.filterFuncWithAttributes(CG, AB);
 
         FuncSet callees;
 
@@ -152,8 +153,7 @@ public:
             callees.insert(&e);
         });
 
-        const auto &callers =
-            PropagateAttributes::getTransitiveCallers(CG, callees);
+        const auto &callers = propattr.getTransitiveCallers(CG, callees);
 
         // subcase
         found = lookup("functions found");
