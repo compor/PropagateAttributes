@@ -11,6 +11,9 @@
 #include <algorithm>
 // using std::for_each
 
+#include <functional>
+// using std::bind
+
 #include <cassert>
 // using assert
 
@@ -65,6 +68,14 @@ using test_result_map = std::map<std::string, test_result_t>;
 
 struct test_result_visitor : public boost::static_visitor<unsigned int> {
   unsigned int operator()(unsigned int i) const { return i; }
+};
+
+struct TestPropagateAttributesStats {
+  TestPropagateAttributesStats() : m_filteredFuncNum(0) {}
+
+  void onFilteredFunc() { m_filteredFuncNum++; }
+
+  unsigned int m_filteredFuncNum;
 };
 
 class TestPropagateAttributes : public testing::Test {
@@ -143,6 +154,10 @@ public:
         llvm::AttrBuilder AB;
         AB.addAttribute("foo");
         PropagateAttributes propattr;
+        TestPropagateAttributesStats stats;
+        propattr.addObserver(
+            PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
+            std::bind(&TestPropagateAttributesStats::onFilteredFunc, stats));
 
         const auto &funcs = propattr.filterFuncWithAttributes(CG, AB);
 
@@ -158,21 +173,31 @@ public:
         // subcase
         found = lookup("functions found");
         if (found != std::end(m_trm)) {
-          const auto &ev1 =
+          const auto &ev =
               boost::apply_visitor(test_result_visitor(), found->second);
           const auto &ff = funcs.size();
 
-          EXPECT_EQ(ev1, ff) << found->first;
+          EXPECT_EQ(ev, ff) << found->first;
         }
 
         // subcase
         found = lookup("transitive function callers found");
         if (found != std::end(m_trm)) {
-          const auto &ev2 =
+          const auto &ev =
               boost::apply_visitor(test_result_visitor(), found->second);
           const auto &fc = callers.size();
 
-          EXPECT_EQ(ev2, fc) << found->first;
+          EXPECT_EQ(ev, fc) << found->first;
+        }
+
+        // subcase
+        found = lookup("filtered attribute funcs stats");
+        if (found != std::end(m_trm)) {
+          const auto &ev =
+              boost::apply_visitor(test_result_visitor(), found->second);
+          const auto &fc = stats.m_filteredFuncNum;
+
+          EXPECT_EQ(ev, fc) << found->first;
         }
 
         return false;
@@ -214,6 +239,7 @@ TEST_F(TestPropagateAttributes, NoAttributes) {
   test_result_map trm;
 
   trm.insert({"functions found", 0});
+  trm.insert({"filtered attribute funcs stats", 0});
   ExpectTestPass(trm);
 }
 
