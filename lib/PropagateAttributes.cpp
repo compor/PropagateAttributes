@@ -33,8 +33,9 @@ PropagateAttributes::filterFuncWithAttributes(const llvm::CallGraph &CG,
                             llvm::AttributeSet::FunctionIndex);
 
     if (AB.overlaps(CurAB)) {
-      Funcs.insert(rm_const_ptr_t<decltype(CurFunc)>(CurFunc));
-      notify(EventType::FILTERED_FUNC_EVENT);
+      auto tmpCurFunc = rm_const_ptr_t<decltype(CurFunc)>(CurFunc);
+      Funcs.insert(tmpCurFunc);
+      notify(EventType::FILTERED_FUNC_EVENT, tmpCurFunc);
     }
   }
 
@@ -96,6 +97,17 @@ bool PropagateAttributes::propagate(const llvm::CallGraph &CG,
   return hasChanged;
 }
 
+void PropagateAttributes::registerObserver(EventType e,
+                                           EventCallback callback) {
+  auto found = m_Subscribers.find(e);
+
+  if (std::end(m_Subscribers) == found)
+    m_Subscribers.insert({e, {callback}});
+  else
+    (found->second).push_back(callback);
+
+  return;
+}
 // protected members
 
 bool PropagateAttributes::isCallerOf(const CGSCC_t &SCC,
@@ -114,11 +126,12 @@ bool PropagateAttributes::isCallerOf(const CGSCC_t &SCC,
   return false;
 }
 
-void PropagateAttributes::notify(EventType e) {
-  auto found = m_subscribers.find(e);
+void PropagateAttributes::notify(EventType E, llvm::Function *Func) const {
+  auto found = m_Subscribers.find(E);
 
-  if (std::end(m_subscribers) != found)
-    (found->second)();
+  if (std::end(m_Subscribers) != found)
+    for (const auto &callback : found->second)
+      callback(Func);
 
   return;
 }

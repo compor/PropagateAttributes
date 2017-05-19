@@ -5,8 +5,14 @@
 #ifndef PROPAGATEATTRIBUTES_HPP
 #define PROPAGATEATTRIBUTES_HPP
 
-#include <map>
 #include <functional>
+// std::function
+
+#include <vector>
+// using std::vector
+
+#include <map>
+// using std::map
 
 #include <set>
 // using std::set
@@ -41,20 +47,19 @@ public:
     EVENTS_NUM
   };
 
-  void addObserver(EventType e, std::function<void(void)> callback) {
-    m_subscribers.insert({e, callback});
+  using EventCallback = std::function<void(llvm::Function *)>;
 
-    return;
-  }
+  void registerObserver(EventType e, EventCallback callback);
 
 protected:
   using CGSCC_t = std::vector<const llvm::CallGraphNode *>;
 
   bool isCallerOf(const CGSCC_t &SCC, const FuncSet &PotentialCallees);
 
-  std::map<EventType, std::function<void(void)>> m_subscribers;
+  // observer pattern part
+  std::map<EventType, std::vector<EventCallback>> m_Subscribers;
 
-  void notify(EventType e);
+  void notify(EventType E, llvm::Function *Func) const;
 };
 
 #endif // PROPAGATEATTRIBUTES_HPP

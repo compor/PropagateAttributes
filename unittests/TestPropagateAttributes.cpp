@@ -13,6 +13,7 @@
 
 #include <functional>
 // using std::bind
+// using std::placeholders
 
 #include <cassert>
 // using assert
@@ -73,7 +74,7 @@ struct test_result_visitor : public boost::static_visitor<unsigned int> {
 struct TestPropagateAttributesStats {
   TestPropagateAttributesStats() : m_filteredFuncNum(0) {}
 
-  void onFilteredFunc() { ++m_filteredFuncNum; }
+  void onFilteredFunc(llvm::Function *Func) { ++m_filteredFuncNum; }
 
   unsigned int m_filteredFuncNum;
 };
@@ -155,9 +156,10 @@ public:
         AB.addAttribute("foo");
         PropagateAttributes propattr;
         TestPropagateAttributesStats stats;
-        propattr.addObserver(
+        propattr.registerObserver(
             PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
-            std::bind(&TestPropagateAttributesStats::onFilteredFunc, &stats));
+            std::bind(&TestPropagateAttributesStats::onFilteredFunc, &stats,
+                      std::placeholders::_1));
 
         const auto &funcs = propattr.filterFuncWithAttributes(CG, AB);
 
