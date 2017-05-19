@@ -32,8 +32,10 @@ PropagateAttributes::filterFuncWithAttributes(const llvm::CallGraph &CG,
     llvm::AttrBuilder CurAB(CurFunc->getAttributes(),
                             llvm::AttributeSet::FunctionIndex);
 
-    if (AB.overlaps(CurAB))
+    if (AB.overlaps(CurAB)) {
       Funcs.insert(rm_const_ptr_t<decltype(CurFunc)>(CurFunc));
+      notify(EventType::FILTERED_FUNC_EVENT);
+    }
   }
 
   return Funcs;
@@ -110,4 +112,13 @@ bool PropagateAttributes::isCallerOf(const CGSCC_t &SCC,
   }
 
   return false;
+}
+
+void PropagateAttributes::notify(EventType e) {
+  auto found = m_subscribers.find(e);
+
+  if (std::end(m_subscribers) != found)
+    (found->second)();
+
+  return;
 }

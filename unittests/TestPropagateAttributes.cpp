@@ -73,7 +73,7 @@ struct test_result_visitor : public boost::static_visitor<unsigned int> {
 struct TestPropagateAttributesStats {
   TestPropagateAttributesStats() : m_filteredFuncNum(0) {}
 
-  void onFilteredFunc() { m_filteredFuncNum++; }
+  void onFilteredFunc() { ++m_filteredFuncNum; }
 
   unsigned int m_filteredFuncNum;
 };
@@ -157,7 +157,7 @@ public:
         TestPropagateAttributesStats stats;
         propattr.addObserver(
             PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
-            std::bind(&TestPropagateAttributesStats::onFilteredFunc, stats));
+            std::bind(&TestPropagateAttributesStats::onFilteredFunc, &stats));
 
         const auto &funcs = propattr.filterFuncWithAttributes(CG, AB);
 
@@ -195,7 +195,7 @@ public:
         if (found != std::end(m_trm)) {
           const auto &ev =
               boost::apply_visitor(test_result_visitor(), found->second);
-          const auto &fc = stats.m_filteredFuncNum;
+          const auto fc = stats.m_filteredFuncNum;
 
           EXPECT_EQ(ev, fc) << found->first;
         }
@@ -248,6 +248,7 @@ TEST_F(TestPropagateAttributes, DoesNotHaveRequestedAttribute) {
   test_result_map trm;
 
   trm.insert({"functions found", 0});
+  trm.insert({"filtered attribute funcs stats", 0});
   ExpectTestPass(trm);
 }
 
@@ -256,6 +257,7 @@ TEST_F(TestPropagateAttributes, HasRequestedAttribute) {
   test_result_map trm;
 
   trm.insert({"functions found", 1});
+  trm.insert({"filtered attribute funcs stats", 1});
   ExpectTestPass(trm);
 }
 

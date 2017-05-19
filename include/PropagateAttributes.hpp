@@ -53,6 +53,8 @@ protected:
   bool isCallerOf(const CGSCC_t &SCC, const FuncSet &PotentialCallees);
 
   std::map<EventType, std::function<void(void)>> m_subscribers;
+
+  void notify(EventType e);
 };
 
 #endif // PROPAGATEATTRIBUTES_HPP
