@@ -20,15 +20,29 @@
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
 
+#include "llvm/ADT/SmallString.h"
+// using llvm::SmallString
+
 #include "llvm/ADT/StringRef.h"
 // using llvm::StringRef
 
 #include "llvm/Support/raw_ostream.h"
-// using llvm::raw_ostream
+// using llvm::raw_fd_ostream
+
+#include "llvm/Support/CommandLine.h"
+// using llvm::cl::opt
+// using llvm::cl::desc
+
+#include "llvm/Support/FileSystem.h"
+// using llvm::sys::fs::OpenFlags
 
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
 // using llvm::dbgs
+
+#include <functional>
+// using std::bind
+// using std::placeholders
 
 #include "PropagateAttributes.hpp"
 #include "PropagateAttributesPass.hpp"
@@ -81,6 +95,10 @@ static llvm::RegisterStandardPasses RegisterPropagateAttributesPass(
 const std::map<llvm::StringRef, llvm::Attribute::AttrKind>
     PropagateAttributesPass::TIAttrs{{"noreturn", llvm::Attribute::NoReturn}};
 
+static llvm::cl::opt<std::string> ReportStatsFilename(
+    "pattr-stats",
+    llvm::cl::desc("propagate attributes stats report filename"));
+
 static llvm::cl::list<std::string> TDAttributesListOptions(
     "pattr-td-attr",
     llvm::cl::desc(
@@ -97,6 +115,40 @@ static llvm::cl::list<std::string> TIAttributesListOptions(
 
 namespace {
 
+class PropagateAttributesStats {
+public:
+  PropagateAttributesStats(llvm::StringRef FilenamePrefix)
+      : m_FilenamePrefix(FilenamePrefix) {}
+  void onEvent(llvm::Function *Func) { FuncsProcessed.insert(Func); }
+
+  void clear() { FuncsProcessed.clear(); }
+
+  void report(const llvm::StringRef FilenameSuffix) {
+    std::error_code err;
+
+    const auto &filename = m_FilenamePrefix + FilenameSuffix.str();
+    llvm::raw_fd_ostream report(filename.getSingleStringRef(), err,
+                                llvm::sys::fs::F_Text);
+
+    if (err)
+      PLUGIN_ERR << "could not open file: \"" << ReportStatsFilename
+                 << "\" reason: " << err.message() << "\n";
+    else {
+      report << FuncsProcessed.size() << "\n";
+
+      for (const auto &func : FuncsProcessed)
+        if (func->hasName())
+          report << func->getName() << "\n";
+    }
+
+    return;
+  }
+
+private:
+  llvm::SmallString<16> m_FilenamePrefix;
+  FuncSet FuncsProcessed;
+};
+
 PropagateAttributesPass::PropagateAttributesPass() : llvm::ModulePass(ID) {
   return;
 }
@@ -110,17 +162,39 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   checkCmdLineOptions(TIAttributesListOptions);
+  bool shouldReportStats = !ReportStatsFilename.empty();
   bool hasChanged = false;
 
   const auto &CG = getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
   llvm::AttrBuilder tdAB;
 
+  PropagateAttributesStats filteredStats("pattr-filtered-");
+  PropagateAttributesStats propagatedStats("pattr-propagated-");
+
   PropagateAttributes propattr;
+  if (shouldReportStats) {
+    propattr.registerObserver(
+        PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
+        std::bind(&PropagateAttributesStats::onEvent, &filteredStats,
+                  std::placeholders::_1));
+
+    propattr.registerObserver(
+        PropagateAttributes::EventType::PROPAGATED_FUNC_EVENT,
+        std::bind(&PropagateAttributesStats::onEvent, &propagatedStats,
+                  std::placeholders::_1));
+  }
 
   for (const auto &e : TDAttributesListOptions) {
     tdAB.addAttribute(e);
     hasChanged = propattr.propagate(CG, tdAB);
     tdAB.clear();
+
+    if (shouldReportStats) {
+      filteredStats.report(e);
+      propagatedStats.report(e);
+      filteredStats.clear();
+      propagatedStats.clear();
+    }
   }
 
   llvm::AttrBuilder tiAB;
@@ -128,6 +202,13 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
     tiAB.addAttribute(lookupTIAttribute(e));
     hasChanged = propattr.propagate(CG, tiAB);
     tiAB.clear();
+
+    if (shouldReportStats) {
+      filteredStats.report(e);
+      propagatedStats.report(e);
+      filteredStats.clear();
+      propagatedStats.clear();
+    }
   }
 
   return hasChanged;

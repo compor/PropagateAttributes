@@ -156,6 +156,7 @@ public:
         AB.addAttribute("foo");
         PropagateAttributes propattr;
         TestPropagateAttributesStats stats;
+
         propattr.registerObserver(
             PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
             std::bind(&TestPropagateAttributesStats::onFilteredFunc, &stats,

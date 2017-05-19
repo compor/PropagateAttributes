@@ -90,6 +90,7 @@ bool PropagateAttributes::propagate(const llvm::CallGraph &CG,
       caller->addAttributes(
           curIndex, llvm::AttributeSet::get(curCtx, curIndex, CallerAB));
 
+      notify(EventType::PROPAGATED_FUNC_EVENT, caller);
       hasChanged = true;
     }
   }
