@@ -117,10 +117,12 @@ namespace {
 
 class PropagateAttributesStats {
 public:
-  PropagateAttributesStats(llvm::StringRef FilenamePrefix)
-      : m_FilenamePrefix(FilenamePrefix) {}
-  void onEvent(llvm::Function *Func) { FuncsProcessed.insert(Func); }
+  PropagateAttributesStats(PropagateAttributes::EventType E,
+                           llvm::StringRef FilenamePrefix)
+      : m_EventType(E), m_FilenamePrefix(FilenamePrefix) {}
 
+  PropagateAttributes::EventType getEventType() const { return m_EventType; }
+  void onEvent(llvm::Function *Func) { FuncsProcessed.insert(Func); }
   void clear() { FuncsProcessed.clear(); }
 
   void report(llvm::StringRef FilenameSuffix) {
@@ -145,6 +147,7 @@ public:
   }
 
 private:
+  const PropagateAttributes::EventType m_EventType;
   llvm::SmallString<16> m_FilenamePrefix;
   FuncSet FuncsProcessed;
 };
@@ -173,34 +176,31 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   for (const auto &e : TIAttributesList)
     AttributesList.emplace_back(e, false);
 
-  PropagateAttributesStats filteredStats("pattr-filtered-");
-  PropagateAttributesStats propagatedStats("pattr-propagated-");
+  std::vector<PropagateAttributesStats> stats;
+  stats.emplace_back(PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
+                     "pattr-filtered-");
+  stats.emplace_back(PropagateAttributes::EventType::PROPAGATED_FUNC_EVENT,
+                     "pattr-propagated-");
   PropagateAttributes propattr;
 
   if (shouldReportStats) {
-    propattr.registerObserver(
-        PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
-        std::bind(&PropagateAttributesStats::onEvent, &filteredStats,
-                  std::placeholders::_1));
-
-    propattr.registerObserver(
-        PropagateAttributes::EventType::PROPAGATED_FUNC_EVENT,
-        std::bind(&PropagateAttributesStats::onEvent, &propagatedStats,
-                  std::placeholders::_1));
+    for (auto &e : stats)
+      propattr.registerObserver(e.getEventType(),
+                                std::bind(&PropagateAttributesStats::onEvent,
+                                          &e, std::placeholders::_1));
   }
 
   for (const auto &e : AttributesList) {
     llvm::AttrBuilder AB;
     const auto &attr = e.first;
-    e.second ? AB.addAttribute(attr)
-             : AB.addAttribute(lookupTIAttribute(attr));
+    e.second ? AB.addAttribute(attr) : AB.addAttribute(lookupTIAttribute(attr));
     hasChanged = propattr.propagate(CG, AB);
 
     if (shouldReportStats) {
-      filteredStats.report(attr);
-      propagatedStats.report(attr);
-      filteredStats.clear();
-      propagatedStats.clear();
+      for (auto &e : stats) {
+        e.report(attr);
+        e.clear();
+      }
     }
   }
 
