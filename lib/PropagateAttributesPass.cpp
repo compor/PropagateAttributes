@@ -99,13 +99,13 @@ static llvm::cl::opt<std::string> ReportStatsFilename(
     "pattr-stats",
     llvm::cl::desc("propagate attributes stats report filename"));
 
-static llvm::cl::list<std::string> TDAttributesListOptions(
+static llvm::cl::list<std::string> TDAttributesList(
     "pattr-td-attr",
     llvm::cl::desc(
         "Specify target-dependent attributes to propagate up the call graph"),
     llvm::cl::CommaSeparated, llvm::cl::ZeroOrMore, llvm::cl::NotHidden);
 
-static llvm::cl::list<std::string> TIAttributesListOptions(
+static llvm::cl::list<std::string> TIAttributesList(
     "pattr-ti-attr",
     llvm::cl::desc(
         "Specify target-independent attributes to propagate up the call graph"),
@@ -123,7 +123,7 @@ public:
 
   void clear() { FuncsProcessed.clear(); }
 
-  void report(const llvm::StringRef FilenameSuffix) {
+  void report(llvm::StringRef FilenameSuffix) {
     std::error_code err;
 
     const auto &filename = m_FilenamePrefix + FilenameSuffix.str();
@@ -161,17 +161,22 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
-  checkCmdLineOptions(TIAttributesListOptions);
+  checkCmdLineOptions(TIAttributesList);
   bool shouldReportStats = !ReportStatsFilename.empty();
   bool hasChanged = false;
 
   const auto &CG = getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
-  llvm::AttrBuilder tdAB;
+
+  std::vector<std::pair<std::string, bool>> AttributesList;
+  for (const auto &e : TDAttributesList)
+    AttributesList.emplace_back(e, true);
+  for (const auto &e : TIAttributesList)
+    AttributesList.emplace_back(e, false);
 
   PropagateAttributesStats filteredStats("pattr-filtered-");
   PropagateAttributesStats propagatedStats("pattr-propagated-");
-
   PropagateAttributes propattr;
+
   if (shouldReportStats) {
     propattr.registerObserver(
         PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
@@ -184,28 +189,16 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
                   std::placeholders::_1));
   }
 
-  for (const auto &e : TDAttributesListOptions) {
-    tdAB.addAttribute(e);
-    hasChanged = propattr.propagate(CG, tdAB);
-    tdAB.clear();
+  for (const auto &e : AttributesList) {
+    llvm::AttrBuilder AB;
+    const auto &attr = e.first;
+    e.second ? AB.addAttribute(attr)
+             : AB.addAttribute(lookupTIAttribute(attr));
+    hasChanged = propattr.propagate(CG, AB);
 
     if (shouldReportStats) {
-      filteredStats.report(e);
-      propagatedStats.report(e);
-      filteredStats.clear();
-      propagatedStats.clear();
-    }
-  }
-
-  llvm::AttrBuilder tiAB;
-  for (const auto &e : TIAttributesListOptions) {
-    tiAB.addAttribute(lookupTIAttribute(e));
-    hasChanged = propattr.propagate(CG, tiAB);
-    tiAB.clear();
-
-    if (shouldReportStats) {
-      filteredStats.report(e);
-      propagatedStats.report(e);
+      filteredStats.report(attr);
+      propagatedStats.report(attr);
       filteredStats.clear();
       propagatedStats.clear();
     }
