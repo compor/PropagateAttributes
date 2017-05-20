@@ -95,7 +95,7 @@ static llvm::RegisterStandardPasses RegisterPropagateAttributesPass(
 const std::map<llvm::StringRef, llvm::Attribute::AttrKind>
     PropagateAttributesPass::TIAttrs{{"noreturn", llvm::Attribute::NoReturn}};
 
-static llvm::cl::opt<std::string> ReportStatsFilename(
+static llvm::cl::opt<std::string> ReportStatsFilenamePrefix(
     "pattr-stats",
     llvm::cl::desc("propagate attributes stats report filename"));
 
@@ -128,12 +128,13 @@ public:
   void report(llvm::StringRef FilenameSuffix) {
     std::error_code err;
 
-    const auto &filename = m_FilenamePrefix + FilenameSuffix.str();
-    llvm::raw_fd_ostream report(filename.getSingleStringRef(), err,
-                                llvm::sys::fs::F_Text);
+    llvm::SmallString<32> filename{m_FilenamePrefix};
+    filename += FilenameSuffix;
+    filename += ".txt";
+    llvm::raw_fd_ostream report(filename.str(), err, llvm::sys::fs::F_Text);
 
     if (err)
-      PLUGIN_ERR << "could not open file: \"" << ReportStatsFilename
+      PLUGIN_ERR << "could not open file: \"" << filename
                  << "\" reason: " << err.message() << "\n";
     else {
       report << FuncsProcessed.size() << "\n";
@@ -165,7 +166,7 @@ void PropagateAttributesPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
   checkCmdLineOptions(TIAttributesList);
-  bool shouldReportStats = !ReportStatsFilename.empty();
+  bool shouldReportStats = !ReportStatsFilenamePrefix.empty();
   bool hasChanged = false;
 
   const auto &CG = getAnalysis<llvm::CallGraphWrapperPass>().getCallGraph();
@@ -178,9 +179,9 @@ bool PropagateAttributesPass::runOnModule(llvm::Module &M) {
 
   std::vector<PropagateAttributesStats> stats;
   stats.emplace_back(PropagateAttributes::EventType::FILTERED_FUNC_EVENT,
-                     "pattr-filtered-");
+                     ReportStatsFilenamePrefix + "-filtered-");
   stats.emplace_back(PropagateAttributes::EventType::PROPAGATED_FUNC_EVENT,
-                     "pattr-propagated-");
+                     ReportStatsFilenamePrefix + "-propagated-");
   PropagateAttributes propattr;
 
   if (shouldReportStats) {
