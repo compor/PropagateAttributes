@@ -29,7 +29,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(PRJ_STANDALONE_BUILD TRUE)
 
-  msg(STATUS "configuring as external LLVM project")
+  message(STATUS "configuring as external LLVM project")
 endif()
 
 
@@ -52,13 +52,13 @@ if(NOT LLVM_ENABLE_RTTI)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 endif()
 
-msg(STATUS "RTTI support: ${LLVM_ENABLE_RTTI}")
+message(STATUS "RTTI support: ${LLVM_ENABLE_RTTI}")
 
 if(NOT LLVM_ENABLE_EH)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 endif()
 
-msg(STATUS "EH support: ${LLVM_ENABLE_EH}")
+message(STATUS "EH support: ${LLVM_ENABLE_EH}")
 
 
 # when we are building the project as standalone, we'd like to leave the install

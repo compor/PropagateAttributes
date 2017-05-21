@@ -1,18 +1,8 @@
 # cmake file
 
-function(fatal message_txt)
-  message(FATAL_ERROR "${message_txt}")
-endfunction()
-
-
 function(debug message_txt)
   message(STATUS "[DEBUG] ${message_txt}")
 endfunction()
-
-
-macro(msg mode)
-  message(${mode} "${PRJ_NAME} ${ARGN}")
-endmacro()
 
 
 function(get_version version)
@@ -60,10 +50,10 @@ function(set_policies)
       if(NOT oldval EQUAL newval)
         cmake_policy(SET "${plc}" "${newval}")
 
-        msg(STATUS "policy ${plc}: ${newval}")
+        message(STATUS "policy ${plc}: ${newval}")
       endif()
     else()
-      msg(WARNING "policy ${plc} is not defined")
+      message(WARNING "policy ${plc} is not defined")
     endif()
   endforeach()
 endfunction()
