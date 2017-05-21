@@ -17,7 +17,7 @@ include(HandleLLVMDependency)
 option(PRJ_USE_LLVM_INTERNAL_MODULE TRUE)
 option(PRJ_SKIP_TESTS TRUE)
 
-get_version(PRJ_VERSION)
+get_version(VERSION PRJ_VERSION)
 
 set(PRJ_NAME PropagateAttributes)
 
