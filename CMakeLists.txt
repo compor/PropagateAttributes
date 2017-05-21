@@ -166,6 +166,11 @@ configure_file(
   "${CMAKE_CURRENT_BINARY_DIR}/share/cmake/${PRJ_NAME_LOWER}-${PRJ_CMAKE_CONFIG_FILE}"
   @ONLY)
 
+get_version(SHORT VERSION PRJ_VERSION_SHORT)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/share/cmake/${PRJ_NAME_LOWER}-config-version.cmake"
+  VERSION ${PRJ_VERSION_SHORT} COMPATIBILITY SameMajorVersion)
+
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/" 
   DESTINATION ${PRJ_INSTALL_INCLUDE_DIR})
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/share/"
