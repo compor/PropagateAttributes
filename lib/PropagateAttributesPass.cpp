@@ -2,8 +2,6 @@
 //
 //
 
-#define DEBUG_TYPE "propagate_attributes"
-
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
@@ -46,6 +44,8 @@
 
 #include "PropagateAttributes.hpp"
 #include "PropagateAttributesPass.hpp"
+
+#define DEBUG_TYPE "propagate_attributes"
 
 #ifndef NDEBUG
 #define PLUGIN_OUT llvm::outs()
